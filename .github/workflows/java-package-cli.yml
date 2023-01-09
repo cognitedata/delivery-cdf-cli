@@ -1,0 +1,13 @@
+name: java-package-cli
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - "main"
+      
+jobs:
+  package-cli:
+    uses: ./.github/workflows/java-maven-skaffold-build-push-docker.yml
+    with:
+      repositoryFolder: "."
+    secrets: inherit

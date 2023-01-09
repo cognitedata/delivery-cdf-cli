@@ -1,0 +1,20 @@
+apiVersion: skaffold/v2beta29
+kind: Config
+metadata:
+  name: cdf-cli
+build:
+  local:
+    push: false
+  artifacts:
+  - image: cdf-cli
+    context: .
+    jib:
+      fromImage: "gcr.io/distroless/java17-debian11"
+  tagPolicy:
+    dateTime:
+      format: "20060102T150405"
+      timezone: "UTC"
+deploy:
+  kustomize:
+    paths:
+      - ./kubernetes-manifests/
