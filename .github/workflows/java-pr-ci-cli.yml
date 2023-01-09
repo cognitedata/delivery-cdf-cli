@@ -1,0 +1,10 @@
+name: java-pr-ci-cli
+on:
+  workflow_dispatch:
+  pull_request:
+
+jobs:
+  build-cli:
+    uses: ./.github/workflows/java-maven-skaffold-build.yml
+    with:
+      repositoryFolder: "."
