@@ -51,12 +51,12 @@ The easiest way to run the CLI, is as a container via Docker (or similar):
 ```console
 $ docker run -it -v c:\files:/files -v c:\creds:/creds kjetilh33/cdf-cli:latest files upload /files --credentials-file=/creds/creds.json
 ```
-- `-it`: attaches the terminal to the container.
+- `-it`: attaches the terminal to the container. Required for CLI input and output.
 - `-v c:\files:/files`: Mounts the local directory hosting the files you want to upload to CDF.
 - `-v c:\creds:/creds`: Mounts a local directory hosting the credentials file.
 - `kjetilh33/cdf-cli:latest`: Use the latest build of the CLI.
-- `files upload /files --credentials-file=/creds/creds.json`: Upload files from the `/files` directory.
-- `--credentials-file=/creds/creds.json`: Specify the credentials file.
+- `files upload /files`: Upload files from the `/files` directory (mounted from `c:\files` locally).
+- `--credentials-file=/creds/creds.json`: Specify the credentials file (mounted from `c:\creds` locally).
 
 ## Quickstart
 
