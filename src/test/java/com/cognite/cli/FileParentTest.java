@@ -5,6 +5,7 @@ import com.cognite.client.Request;
 import com.cognite.client.config.TokenUrl;
 import com.cognite.client.dto.FileMetadata;
 import com.cognite.client.dto.Item;
+import com.google.common.collect.Streams;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -32,7 +34,7 @@ class FileParentTest {
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
         LOG.info(loggingPrefix + "---------------  Start test. Upload a single file.  -----------------");
 
-        String[] inputArgs = {
+        String[] uploadInputArgs = {
                 "files",
                 "upload",
                 "--cdf-project=" + TestConfigProvider.getProject(),
@@ -44,7 +46,7 @@ class FileParentTest {
                 "./files/aveva-class-library.xml"
         };
 
-        CdfCli.main(inputArgs);
+        CdfCli.main(uploadInputArgs);
 
         LOG.info(loggingPrefix + "-------------  Finished uploading single file. Duration : {} -------------",
                 Duration.between(startInstant, Instant.now()));
@@ -64,20 +66,36 @@ class FileParentTest {
                         .withFilterParameter("source", fileSource))
                 .forEachRemaining(listFilesResults::addAll);
 
-        List<Item> fileItems = listFilesResults.stream()
-                .map(fileMetadata -> Item.newBuilder()
-                        .setId(fileMetadata.getId())
-                        .build())
-                .toList();
+        // build file id list argument for the cli
+        List<String> idParameters = new ArrayList<>();
+        for (FileMetadata item : listFilesResults) {
+            idParameters.add("--ext-id=" + item.getExternalId());
+        }
 
-        List<Item> deleteItemsResults = client.files().delete(fileItems);
+        String[] deleteInputArgsPrefix = {
+                "files",
+                "delete",
+                "--cdf-project=" + TestConfigProvider.getProject(),
+                "--cdf-host=" + TestConfigProvider.getHost(),
+                "--client-id=" + TestConfigProvider.getClientId(),
+                "--client-secret=" + TestConfigProvider.getClientSecret(),
+                "--tenant-id=" + TestConfigProvider.getTenantId()
+        };
+
+        // concatenate to form the final input.
+        List<String> argsList = Streams.concat(Arrays.stream(deleteInputArgsPrefix), idParameters.stream())
+                        .toList();
+
+        CdfCli.main(argsList.toArray(new String[0]));
+
+        //List<Item> deleteItemsResults = client.files().delete(fileItems);
 
         LOG.info(loggingPrefix + "------------  Finished removing the file. Duration : {} ------------",
                 Duration.between(startInstant, Instant.now()));
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
 
         assertEquals(listFilesResults.size(), 1);
-        assertEquals(listFilesResults.size(), deleteItemsResults.size());
+        //assertEquals(listFilesResults.size(), deleteItemsResults.size());
     }
 
     @Test
@@ -112,7 +130,7 @@ class FileParentTest {
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
         LOG.info(loggingPrefix + "---------------  Upload a directory.  -----------------");
 
-        String[] inputArgs = {
+        String[] uploadInputArgs = {
                 "files",
                 "upload",
                 "--credentials-file=" + credentialsFile.toString(),
@@ -120,14 +138,11 @@ class FileParentTest {
                 "./files"
         };
 
-        CdfCli.main(inputArgs);
+        CdfCli.main(uploadInputArgs);
 
         LOG.info(loggingPrefix + "-------------  Finished uploading directory. Duration : {} -------------",
                 Duration.between(startInstant, Instant.now()));
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
-
-        LOG.info(loggingPrefix + "---------------- Clean up. Remove credentials file  -----------------");
-        Files.deleteIfExists(credentialsFile);
 
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
         LOG.info(loggingPrefix + "---------------- Clean up. Remove uploaded file  -----------------");
@@ -150,14 +165,29 @@ class FileParentTest {
                         .build())
                 .toList();
 
-        List<Item> deleteItemsResults = client.files().delete(fileItems);
+        String[] deleteInputArgs = {
+                "files",
+                "delete",
+                "--credentials-file=" + credentialsFile.toString(),
+                "--filter=source=" + fileSource
+        };
+
+        LOG.info("Deleting files with the following parameters: {}", Arrays.stream(deleteInputArgs).toList());
+
+        CdfCli.main(deleteInputArgs);
+
+        //List<Item> deleteItemsResults = client.files().delete(fileItems);
 
         LOG.info(loggingPrefix + "------------  Finished removing the file. Duration : {} ------------",
                 Duration.between(startInstant, Instant.now()));
+
+        LOG.info(loggingPrefix + "---------------- Clean up. Remove credentials file  -----------------");
+        Files.deleteIfExists(credentialsFile);
+
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
 
         assertEquals(listFilesResults.size(), 2);
-        assertEquals(listFilesResults.size(), deleteItemsResults.size());
+        //assertEquals(listFilesResults.size(), deleteItemsResults.size());
     }
 
     @Test

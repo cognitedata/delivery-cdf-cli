@@ -51,12 +51,41 @@ The easiest way to run the CLI, is as a container via Docker (or similar):
 ```console
 $ docker run -it -v c:\files:/files -v c:\creds:/creds kjetilh33/cdf-cli:latest files upload /files --credentials-file=/creds/creds.json
 ```
-- `-it`: attaches the terminal to the container.
+- `-it`: attaches the terminal to the container. Required for CLI input and output.
 - `-v c:\files:/files`: Mounts the local directory hosting the files you want to upload to CDF.
 - `-v c:\creds:/creds`: Mounts a local directory hosting the credentials file.
 - `kjetilh33/cdf-cli:latest`: Use the latest build of the CLI.
-- `files upload /files --credentials-file=/creds/creds.json`: Upload files from the `/files` directory.
-- `--credentials-file=/creds/creds.json`: Specify the credentials file.
+- `files upload /files`: Upload files from the `/files` directory (mounted from `c:\files` locally).
+- `--credentials-file=/creds/creds.json`: Specify the credentials file (mounted from `c:\creds` locally).
+
+### Delete files from CDF
+
+You can delete files based on (external) ids:
+```console
+$ docker run -it -v c:\files:/files -v c:\creds:/creds kjetilh33/cdf-cli:latest files delete --credentials-file=/creds/creds.json --external-id=myFileExternalId
+```
+- `-it`: attaches the terminal to the container. Required for CLI input and output.
+- `-v c:\files:/files`: Mounts the local directory hosting the files you want to upload to CDF.
+- `-v c:\creds:/creds`: Mounts a local directory hosting the credentials file.
+- `kjetilh33/cdf-cli:latest`: Use the latest build of the CLI.
+- `--credentials-file=/creds/creds.json`: Specify the credentials file (mounted from `c:\creds` locally).
+- `files delete`: Specifies the file delete command.
+- `--external-id=myFileExternalId`: Specify which file ext id to delete. You can repeat this parameter for deleting multiple files.
+
+And delete based on filters:
+```console
+$ docker run -it -v c:\files:/files -v c:\creds:/creds kjetilh33/cdf-cli:latest files delete --credentials-file=/creds/creds.json --filter=source=mySource --metadata-filter=myMetadataKey=Value
+```
+- `-it`: attaches the terminal to the container. Required for CLI input and output.
+- `-v c:\files:/files`: Mounts the local directory hosting the files you want to upload to CDF.
+- `-v c:\creds:/creds`: Mounts a local directory hosting the credentials file.
+- `kjetilh33/cdf-cli:latest`: Use the latest build of the CLI.
+- `--credentials-file=/creds/creds.json`: Specify the credentials file (mounted from `c:\creds` locally).
+- `files delete`: Specifies the file delete command.
+- `--filter=source=mySource`: A filter specification in the form `key=value`. You can specify multiple filters by repeating the parameter. All filters will be AND-ed.
+- `--metadata-filter=myMetadataKey=Value`: A filter specification in the form `key=value`. You can specify multiple metadata filters by repeating the parameter. All filters will be AND-ed.
+
+
 
 ## Quickstart
 
