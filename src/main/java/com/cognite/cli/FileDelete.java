@@ -11,6 +11,7 @@ import picocli.CommandLine.Option;
 
 import java.nio.file.Files;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -36,7 +37,7 @@ public class FileDelete implements Callable<Integer> {
 
     @Option(names = {"--filter"}, description = "A file filter expression in the format <key=value>. You can specify multiple filters",
             arity = "0..1", interactive = true, echo = true)
-    private Map<String, String> filter;
+    private Map<String, Object> filter;
 
     @Option(names = {"--metadata-filter"}, description = "A file metadata filter expression in the format <key=value>. You can specify multiple filters",
             arity = "0..1", interactive = true, echo = true)
@@ -50,6 +51,8 @@ public class FileDelete implements Callable<Integer> {
             return 0;
         }
 
+        int totalDeleteCounter = 0;
+
         if (fileIds.length > 0) {
             LOG.info("Start deleting files based on id...");
             List<Item> deleteIdItems = Arrays.stream(fileIds)
@@ -60,6 +63,7 @@ public class FileDelete implements Callable<Integer> {
                     .files()
                     .delete(deleteIdItems);
 
+            totalDeleteCounter += fileIds.length;
             LOG.info("Completed deleting {} files based on ids: {}",
                     fileIds.length,
                     fileIds);
@@ -75,6 +79,7 @@ public class FileDelete implements Callable<Integer> {
                     .files()
                     .delete(deleteExtIdItems);
 
+            totalDeleteCounter += fileExternalIds.length;
             LOG.info("Completed deleting {} files based on external ids: {}",
                     fileExternalIds.length,
                     fileExternalIds);
@@ -85,42 +90,36 @@ public class FileDelete implements Callable<Integer> {
 
             // Build the request to filter files
             Request request = Request.create();
+            for (Map.Entry<String, Object> entry : filter.entrySet()) {
+                request = request.withFilterParameter(entry.getKey(), entry.getValue());
+            }
+            for (Map.Entry<String, String> entry : metadataFilter.entrySet()) {
+                request = request.withFilterMetadataParameter(entry.getKey(), entry.getValue());
+            }
 
+            LOG.info("Matching files for request:\n {}", request);
 
+            List<FileMetadata> fileFilterResults = new ArrayList<>();
+            cogClientMixin.getCogniteClient().files()
+                    .list(request)
+                    .forEachRemaining(fileFilterResults::addAll);
+            LOG.info("Found {} files matching the filter.", fileFilterResults.size());
 
-            List<Item> deleteExtIdItems = Arrays.stream(fileExternalIds)
-                    .map(extId -> Item.newBuilder().setExternalId(extId).build())
+            // Convert the file filter results to items to prepare for delete operation
+            List<Item> deleteIdItems = fileFilterResults.stream()
+                    .map(fileMetadata -> Item.newBuilder().setId(fileMetadata.getId()).build())
                     .toList();
 
             cogClientMixin.getCogniteClient()
                     .files()
-                    .delete(deleteExtIdItems);
+                    .delete(deleteIdItems);
 
-            LOG.info("Completed deleting {} files based on external ids: {}",
-                    fileExternalIds.length,
-                    fileExternalIds);
+            totalDeleteCounter += deleteIdItems.size();
+            LOG.info("Completed deleting {} files based on filter.",
+                    deleteIdItems.size());
         }
 
-        LOG.info("Setting up the Cognite client and file upload queue.");
-        UploadQueue<FileContainer, FileMetadata> fileBinaryUploadQueue = cogClientMixin.getCogniteClient().files().fileContainerUploadQueue()
-                .withMaxUploadInterval(Duration.ofSeconds(5))
-                .withPostUploadFunction(fileMetadataList ->
-                        fileMetadataList.stream().forEach(fileMetadata -> LOG.info("Finished uploading {}.", fileMetadata.getName())))
-                .withExceptionHandlerFunction(exception -> LOG.warn("Error during upload: {}", exception.getMessage()));
-        fileBinaryUploadQueue.start();
-
-        LOG.info("Start reading files...");
-        int fileCounter = 0;
-        // If the input path is a single file
-        if (Files.isRegularFile(inputPath)) {
-            LOG.info("The input path {} is a single file.", inputPath.toString());
-            fileBinaryUploadQueue.put(buildFileContainer(inputPath));
-            LOG.info("{} added to the upload queue.", inputPath.toString());
-            fileCounter++;
-        }
-
-
-        LOG.info("File upload completed. {} files uploaded.", fileCounter);
+        LOG.info("File deletion completed. {} files deleted.", totalDeleteCounter);
         return 0;
     }
 }
