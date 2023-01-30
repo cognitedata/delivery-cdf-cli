@@ -7,7 +7,7 @@ import java.util.concurrent.Callable;
 
 @Command(name = "files",
         description = "Operations on the CDF Files resource type",
-        subcommands = {FileUpload.class})
+        subcommands = {FileUpload.class, FileDelete.class})
 public class FileParent implements Callable<Integer> {
     private static Logger LOG = LoggerFactory.getLogger(FileParent.class);
 

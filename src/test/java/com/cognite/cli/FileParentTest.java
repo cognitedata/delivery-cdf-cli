@@ -32,7 +32,7 @@ class FileParentTest {
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
         LOG.info(loggingPrefix + "---------------  Start test. Upload a single file.  -----------------");
 
-        String[] inputArgs = {
+        String[] uploadInputArgs = {
                 "files",
                 "upload",
                 "--cdf-project=" + TestConfigProvider.getProject(),
@@ -44,7 +44,7 @@ class FileParentTest {
                 "./files/aveva-class-library.xml"
         };
 
-        CdfCli.main(inputArgs);
+        CdfCli.main(uploadInputArgs);
 
         LOG.info(loggingPrefix + "-------------  Finished uploading single file. Duration : {} -------------",
                 Duration.between(startInstant, Instant.now()));
@@ -70,14 +70,33 @@ class FileParentTest {
                         .build())
                 .toList();
 
-        List<Item> deleteItemsResults = client.files().delete(fileItems);
+        // build file id list argument for the cli
+        String idParameter = "";
+        for (Item item : fileItems) {
+            idParameter += "--id=" + item.getId();
+        }
+
+        String[] deleteInputArgs = {
+                "files",
+                "delete",
+                "--cdf-project=" + TestConfigProvider.getProject(),
+                "--cdf-host=" + TestConfigProvider.getHost(),
+                "--client-id=" + TestConfigProvider.getClientId(),
+                "--client-secret=" + TestConfigProvider.getClientSecret(),
+                "--tenant-id=" + TestConfigProvider.getTenantId(),
+                idParameter
+        };
+
+        CdfCli.main(deleteInputArgs);
+
+        //List<Item> deleteItemsResults = client.files().delete(fileItems);
 
         LOG.info(loggingPrefix + "------------  Finished removing the file. Duration : {} ------------",
                 Duration.between(startInstant, Instant.now()));
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
 
         assertEquals(listFilesResults.size(), 1);
-        assertEquals(listFilesResults.size(), deleteItemsResults.size());
+        //assertEquals(listFilesResults.size(), deleteItemsResults.size());
     }
 
     @Test
@@ -112,7 +131,7 @@ class FileParentTest {
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
         LOG.info(loggingPrefix + "---------------  Upload a directory.  -----------------");
 
-        String[] inputArgs = {
+        String[] uploadInputArgs = {
                 "files",
                 "upload",
                 "--credentials-file=" + credentialsFile.toString(),
@@ -120,14 +139,11 @@ class FileParentTest {
                 "./files"
         };
 
-        CdfCli.main(inputArgs);
+        CdfCli.main(uploadInputArgs);
 
         LOG.info(loggingPrefix + "-------------  Finished uploading directory. Duration : {} -------------",
                 Duration.between(startInstant, Instant.now()));
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
-
-        LOG.info(loggingPrefix + "---------------- Clean up. Remove credentials file  -----------------");
-        Files.deleteIfExists(credentialsFile);
 
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
         LOG.info(loggingPrefix + "---------------- Clean up. Remove uploaded file  -----------------");
@@ -150,14 +166,27 @@ class FileParentTest {
                         .build())
                 .toList();
 
-        List<Item> deleteItemsResults = client.files().delete(fileItems);
+        String[] deleteInputArgs = {
+                "files",
+                "delete",
+                "--credentials-file=" + credentialsFile.toString(),
+                "--filter source=\"" + fileSource + "\""
+        };
+
+        CdfCli.main(deleteInputArgs);
+
+        //List<Item> deleteItemsResults = client.files().delete(fileItems);
 
         LOG.info(loggingPrefix + "------------  Finished removing the file. Duration : {} ------------",
                 Duration.between(startInstant, Instant.now()));
+
+        LOG.info(loggingPrefix + "---------------- Clean up. Remove credentials file  -----------------");
+        Files.deleteIfExists(credentialsFile);
+
         LOG.info(loggingPrefix + "----------------------------------------------------------------------");
 
         assertEquals(listFilesResults.size(), 2);
-        assertEquals(listFilesResults.size(), deleteItemsResults.size());
+        //assertEquals(listFilesResults.size(), deleteItemsResults.size());
     }
 
     @Test

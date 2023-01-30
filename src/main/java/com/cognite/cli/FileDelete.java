@@ -2,15 +2,12 @@ package com.cognite.cli;
 
 import com.cognite.client.Request;
 import com.cognite.client.dto.*;
-import com.cognite.client.queue.UploadQueue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 
-import java.nio.file.Files;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -53,7 +50,7 @@ public class FileDelete implements Callable<Integer> {
 
         int totalDeleteCounter = 0;
 
-        if (fileIds.length > 0) {
+        if (null != fileIds && fileIds.length > 0) {
             LOG.info("Start deleting files based on id...");
             List<Item> deleteIdItems = Arrays.stream(fileIds)
                     .mapToObj(id -> Item.newBuilder().setId(id).build())
@@ -69,7 +66,7 @@ public class FileDelete implements Callable<Integer> {
                     fileIds);
         }
 
-        if (fileExternalIds.length > 0) {
+        if (null != fileExternalIds && fileExternalIds.length > 0) {
             LOG.info("Start deleting files based on external id...");
             List<Item> deleteExtIdItems = Arrays.stream(fileExternalIds)
                     .map(extId -> Item.newBuilder().setExternalId(extId).build())
@@ -85,7 +82,7 @@ public class FileDelete implements Callable<Integer> {
                     fileExternalIds);
         }
 
-        if (filter.size() > 0 || metadataFilter.size() > 0) {
+        if (null != filter && filter.size() > 0 || null != metadataFilter && metadataFilter.size() > 0) {
             LOG.info("Start deleting files based on filter...");
 
             // Build the request to filter files
