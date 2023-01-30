@@ -25,7 +25,7 @@ public class FileDelete implements Callable<Integer> {
     private CogClientMixin cogClientMixin;
 
     @Option(names = "--id", description = "The internal id of the files to delete.",
-            arity = "0..1", interactive = true, echo = true, defaultValue = "")
+            arity = "0..1", interactive = true, echo = true)
     private long[] fileIds;
 
     @Option(names = {"--ext-id"}, description = "The external id of the files to delete.",
@@ -43,7 +43,7 @@ public class FileDelete implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
         // Check that we have some input specified
-        if (fileIds.length == 0 && fileExternalIds.length == 0 && filter.isEmpty() && metadataFilter.isEmpty()) {
+        if (null == fileIds && null == fileExternalIds && null == filter && null == metadataFilter) {
             LOG.info("No file (external) ids specified nor any filter. No files to delete.");
             return 0;
         }
@@ -87,14 +87,19 @@ public class FileDelete implements Callable<Integer> {
 
             // Build the request to filter files
             Request request = Request.create();
-            for (Map.Entry<String, Object> entry : filter.entrySet()) {
-                request = request.withFilterParameter(entry.getKey(), entry.getValue());
-            }
-            for (Map.Entry<String, String> entry : metadataFilter.entrySet()) {
-                request = request.withFilterMetadataParameter(entry.getKey(), entry.getValue());
+            if (null != filter) {
+                for (Map.Entry<String, Object> entry : filter.entrySet()) {
+                    request = request.withFilterParameter(entry.getKey(), entry.getValue());
+                }
             }
 
-            LOG.info("Matching files for request:\n {}", request);
+            if (null != metadataFilter) {
+                for (Map.Entry<String, String> entry : metadataFilter.entrySet()) {
+                    request = request.withFilterMetadataParameter(entry.getKey(), entry.getValue());
+                }
+            }
+
+            LOG.info("Matching files for request:\n {}", request.getRequestParameters());
 
             List<FileMetadata> fileFilterResults = new ArrayList<>();
             cogClientMixin.getCogniteClient().files()

@@ -5,6 +5,7 @@ import com.cognite.client.Request;
 import com.cognite.client.config.TokenUrl;
 import com.cognite.client.dto.FileMetadata;
 import com.cognite.client.dto.Item;
+import com.google.common.collect.Streams;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import java.nio.file.StandardOpenOption;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -64,30 +66,27 @@ class FileParentTest {
                         .withFilterParameter("source", fileSource))
                 .forEachRemaining(listFilesResults::addAll);
 
-        List<Item> fileItems = listFilesResults.stream()
-                .map(fileMetadata -> Item.newBuilder()
-                        .setId(fileMetadata.getId())
-                        .build())
-                .toList();
-
         // build file id list argument for the cli
-        String idParameter = "";
-        for (Item item : fileItems) {
-            idParameter += "--id=" + item.getId();
+        List<String> idParameters = new ArrayList<>();
+        for (FileMetadata item : listFilesResults) {
+            idParameters.add("--ext-id=" + item.getExternalId());
         }
 
-        String[] deleteInputArgs = {
+        String[] deleteInputArgsPrefix = {
                 "files",
                 "delete",
                 "--cdf-project=" + TestConfigProvider.getProject(),
                 "--cdf-host=" + TestConfigProvider.getHost(),
                 "--client-id=" + TestConfigProvider.getClientId(),
                 "--client-secret=" + TestConfigProvider.getClientSecret(),
-                "--tenant-id=" + TestConfigProvider.getTenantId(),
-                idParameter
+                "--tenant-id=" + TestConfigProvider.getTenantId()
         };
 
-        CdfCli.main(deleteInputArgs);
+        // concatenate to form the final input.
+        List<String> argsList = Streams.concat(Arrays.stream(deleteInputArgsPrefix), idParameters.stream())
+                        .toList();
+
+        CdfCli.main(argsList.toArray(new String[0]));
 
         //List<Item> deleteItemsResults = client.files().delete(fileItems);
 
@@ -170,8 +169,10 @@ class FileParentTest {
                 "files",
                 "delete",
                 "--credentials-file=" + credentialsFile.toString(),
-                "--filter source=\"" + fileSource + "\""
+                "--filter=source=" + fileSource
         };
+
+        LOG.info("Deleting files with the following parameters: {}", Arrays.stream(deleteInputArgs).toList());
 
         CdfCli.main(deleteInputArgs);
 
