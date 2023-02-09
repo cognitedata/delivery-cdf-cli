@@ -114,6 +114,11 @@ On Linux/MaxOS:
 $ mvn compile exec:java -Dexec.mainClass="com.cognite.cli.CdfCli"
 ```
 
+```console
+$  mvn compile exec:java -Dexec.mainClass="com.cognite.cli.CdfCli" -Dexec.args="files upload folder-with-files --credentials-file=creds.json"
+```
+
+
 On Windows Powershell:
 ```ps
 > mvn compile exec:java -D exec.mainClass="com.cognite.cli.CdfCli"
