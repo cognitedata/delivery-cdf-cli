@@ -16,7 +16,7 @@
 
         <cdf-sdk-java.version>1.19.1</cdf-sdk-java.version>
         <slf4j-api.version>2.0.7</slf4j-api.version>
-        <picocli.version>4.7.4</picocli.version>
+        <picocli.version>4.7.6</picocli.version>
         <jackson-dataformat-xml.version>2.15.2</jackson-dataformat-xml.version>
         <logback-classic.version>1.4.8</logback-classic.version>
         <junit.version>5.9.3</junit.version>
