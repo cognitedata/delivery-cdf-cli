@@ -20,7 +20,7 @@
         <jackson-dataformat-xml.version>2.15.2</jackson-dataformat-xml.version>
         <logback-classic.version>1.4.8</logback-classic.version>
         <junit.version>5.9.3</junit.version>
-        <jib.maven.plugin.version>3.3.2</jib.maven.plugin.version>
+        <jib.maven.plugin.version>3.4.4</jib.maven.plugin.version>
         <maven-compiler-plugin.version>3.11.0</maven-compiler-plugin.version>
     </properties>
 
